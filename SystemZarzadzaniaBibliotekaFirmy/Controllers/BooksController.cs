@@ -24,6 +24,7 @@ public class BooksController : ControllerBase
     private string GetCurrentUserId() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "Unknown";
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<BookDto>>> GetAllBooks()
     {
         var books = await _bookService.GetAllBooksAsync();
@@ -31,6 +32,7 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<BookDto>> GetBook(int id)
     {
         var book = await _bookService.GetBookByIdAsync(id);
@@ -49,11 +51,13 @@ public class BooksController : ControllerBase
         _logger.LogInformation("Użytkownik {Username} (ID: {UserId}) tworzy nową książkę: {Title}", 
             username, userId, createBookDto.Title);
         
+        // Utworzenie nowej książki w bazie danych
         var book = await _bookService.CreateBookAsync(createBookDto);
         
         _logger.LogInformation("Użytkownik {Username} (ID: {UserId}) utworzył książkę ID: {BookId}, Tytuł: {Title}", 
             username, userId, book.Id, book.Title);
         
+        // Zwrócenie kodu 201 Created wraz z lokalizacją nowego zasobu
         return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
     }
 
@@ -133,6 +137,7 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet("search")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<BookDto>>> SearchBooks([FromQuery] string term)
     {
         var books = await _bookService.SearchBooksAsync(term);
@@ -140,6 +145,7 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet("category/{categoryId}")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<BookDto>>> GetBooksByCategory(int categoryId)
     {
         var books = await _bookService.GetBooksByCategoryAsync(categoryId);
@@ -147,6 +153,7 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet("available")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<BookDto>>> GetAvailableBooks()
     {
         var books = await _bookService.GetAvailableBooksAsync();

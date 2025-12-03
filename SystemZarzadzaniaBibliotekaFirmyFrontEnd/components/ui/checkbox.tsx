@@ -15,11 +15,7 @@ const Checkbox = React.forwardRef<
   const internalRef = React.useRef<HTMLButtonElement>(null)
   const combinedRef = (ref || internalRef) as React.RefObject<HTMLButtonElement>
 
-  React.useEffect(() => {
-    if (combinedRef.current) {
-      combinedRef.current.indeterminate = indeterminate || false
-    }
-  }, [indeterminate, combinedRef])
+
 
   return (
     <CheckboxPrimitive.Root

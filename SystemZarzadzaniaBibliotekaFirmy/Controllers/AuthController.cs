@@ -20,12 +20,14 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginDto loginDto)
     {
+        // Próba logowania użytkownika przez serwis autoryzacji
         var result = await _authService.LoginAsync(loginDto);
         if (result == null)
         {
             return Unauthorized(new { message = "Nieprawidłowa nazwa użytkownika lub hasło" });
         }
 
+        // Zwrócenie tokenu JWT i danych użytkownika w przypadku sukcesu
         return Ok(result);
     }
 
@@ -36,7 +38,7 @@ public class AuthController : ControllerBase
         var hasUsers = await _authService.HasAnyUsersAsync();
         if (hasUsers)
         {
-            // Jeśli są już użytkownicy, wymagaj autoryzacji
+            // Jeśli są już użytkownicy, wymagaj autoryzacji (tylko Admin lub Bibliotekarz może dodawać nowych)
             if (!User.Identity?.IsAuthenticated ?? true)
             {
                 return Unauthorized(new { message = "Wymagana autoryzacja do rejestracji nowych użytkowników" });
@@ -50,12 +52,13 @@ public class AuthController : ControllerBase
         }
         else
         {
-            // Jeśli nie ma użytkowników, pierwszy użytkownik musi być Admin
+            // Jeśli nie ma użytkowników, pierwszy użytkownik musi być Adminem (bootstrap systemu)
             registerDto.Role = "Admin";
         }
 
         try
         {
+            // Rejestracja użytkownika i wygenerowanie tokenu
             var result = await _authService.RegisterAsync(registerDto);
             return CreatedAtAction(nameof(GetUser), new { id = result.Username }, result);
         }

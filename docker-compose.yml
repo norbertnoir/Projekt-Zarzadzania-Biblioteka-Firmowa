@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: library-db
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=StrongPassword123!
+    ports:
+      - "1434:1433"
+    volumes:
+      - sqlvolume:/var/opt/mssql
+    networks:
+      - library-network
+
+  backend:
+    build:
+      context: ./SystemZarzadzaniaBibliotekaFirmy
+      dockerfile: Dockerfile
+    container_name: library-backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=LibraryDb;User Id=sa;Password=StrongPassword123!;TrustServerCertificate=True;
+      - JwtSettings__SecretKey=SuperSecretKey12345678901234567890
+      - JwtSettings__Issuer=LibrarySystem
+      - JwtSettings__Audience=LibraryUsers
+      - JwtSettings__ExpiryInMinutes=60
+    ports:
+      - "8080:8080"
+    depends_on:
+      - sqlserver
+    networks:
+      - library-network
+
+  frontend:
+    build:
+      context: ./SystemZarzadzaniaBibliotekaFirmyFrontEnd
+      dockerfile: Dockerfile
+    container_name: library-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    ports:
+      - "3001:3000"
+    depends_on:
+      - backend
+    networks:
+      - library-network
+
+volumes:
+  sqlvolume:
+
+
+networks:
+  library-network:
+    driver: bridge

@@ -24,14 +24,15 @@ import {
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { booksApi } from "@/lib/api/books"
-import { Book, CreateBookDto } from "@/types"
-import { Plus, Search, Edit, Trash2, Eye } from "lucide-react"
+import { loansApi } from "@/lib/api/loans"
+import { Book, CreateBookDto, CreateLoanDto } from "@/types"
+import { Plus, Search, Edit, Trash2, Eye, BookOpen } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
 import Link from "next/link"
 
 export default function BooksPage() {
-  const { isAdmin, loading: authLoading } = useAuth()
+  const { isAdmin, user, loading: authLoading } = useAuth()
   const [books, setBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -100,16 +101,19 @@ export default function BooksPage() {
     }
   }, [searchTerm, handleSearch, loadBooks])
 
+  // Funkcja obsługująca wysyłanie formularza (dodawanie/edycja)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
       if (editingBook) {
+        // Aktualizacja istniejącej książki
         await booksApi.update(editingBook.id, formData)
         toast({
           title: "Sukces",
           description: "Książka została zaktualizowana",
         })
       } else {
+        // Dodanie nowej książki
         await booksApi.create(formData)
         toast({
           title: "Sukces",
@@ -128,6 +132,7 @@ export default function BooksPage() {
     }
   }
 
+  // Funkcja usuwająca książkę
   const handleDelete = async (id: number) => {
     if (!confirm("Czy na pewno chcesz usunąć tę książkę?")) return
 
@@ -142,6 +147,41 @@ export default function BooksPage() {
       toast({
         title: "Błąd",
         description: error.response?.data?.message || "Wystąpił błąd",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleBorrow = async (book: Book) => {
+    if (!user?.employeeId && !isAdmin) {
+      toast({
+        title: "Błąd",
+        description: "Nie jesteś powiązany z żadnym pracownikiem. Skontaktuj się z administratorem.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!confirm(`Czy na pewno chcesz wypożyczyć książkę "${book.title}"?`)) return
+
+    try {
+      const loanData: CreateLoanDto = {
+        bookId: book.id,
+        employeeId: user?.employeeId || 0, // Backend should handle 0/null for non-admins or we handle it there
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days from now
+        notes: "Wypożyczenie własne przez stronę"
+      }
+
+      await loansApi.create(loanData)
+      toast({
+        title: "Sukces",
+        description: "Książka została wypożyczona",
+      })
+      loadBooks()
+    } catch (error: any) {
+      toast({
+        title: "Błąd",
+        description: error.response?.data?.message || "Wystąpił błąd podczas wypożyczania",
         variant: "destructive",
       })
     }
@@ -197,7 +237,7 @@ export default function BooksPage() {
 
     try {
       const result = await booksApi.deleteBulk(selectedBooks)
-      
+
       if (result.deletedCount === result.requestedCount) {
         toast({
           title: "Sukces",
@@ -210,7 +250,7 @@ export default function BooksPage() {
           variant: "default",
         })
       }
-      
+
       setIsBulkDeleteDialogOpen(false)
       setSelectedBooks([])
       loadBooks()
@@ -497,11 +537,10 @@ export default function BooksPage() {
                     <TableCell>{book.categoryName || "-"}</TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                          book.isAvailable
-                            ? "bg-green-500/10 text-green-700 dark:text-green-400 high-contrast:bg-transparent high-contrast:text-foreground"
-                            : "bg-red-500/10 text-red-700 dark:text-red-400 high-contrast:bg-transparent high-contrast:text-foreground"
-                        }`}
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${book.isAvailable
+                          ? "bg-green-500/10 text-green-700 dark:text-green-400 high-contrast:bg-transparent high-contrast:text-foreground"
+                          : "bg-red-500/10 text-red-700 dark:text-red-400 high-contrast:bg-transparent high-contrast:text-foreground"
+                          }`}
                       >
                         {book.isAvailable ? "Dostępna" : "Wypożyczona"}
                       </span>
@@ -509,10 +548,20 @@ export default function BooksPage() {
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
                         <Link href={`/books/${book.id}`}>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" title="Szczegóły">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
+                        {!isAdmin && book.isAvailable && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleBorrow(book)}
+                            title="Wypożycz"
+                          >
+                            <BookOpen className="h-4 w-4 text-primary" />
+                          </Button>
+                        )}
                         {isAdmin && (
                           <>
                             <Button

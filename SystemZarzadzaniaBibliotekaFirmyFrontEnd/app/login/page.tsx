@@ -22,23 +22,25 @@ export default function LoginPage() {
     password: "",
   })
 
+  // Funkcja obsługująca wysyłanie formularza logowania
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
+      // Wysłanie żądania logowania do API
       const response = await authApi.login(formData)
-      
+
       if (response.token) {
         // Użyj funkcji login z kontekstu, która zapisze token i załaduje użytkownika
         await login(response.token)
-        
+
         toast({
           title: "Sukces",
           description: `Witaj, ${response.username || response.email}!`,
         })
-        
-        // Przekieruj na stronę główną
+
+        // Przekieruj na stronę główną po udanym logowaniu
         router.push('/')
       } else {
         toast({

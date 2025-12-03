@@ -98,16 +98,19 @@ export default function LoansPage() {
     }
   }
 
+  // Funkcja obsługująca formularz wypożyczenia
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
       if (editingLoan) {
+        // Aktualizacja istniejącego wypożyczenia
         await loansApi.update(editingLoan.id, formData as UpdateLoanDto)
         toast({
           title: "Sukces",
           description: "Wypożyczenie zostało zaktualizowane",
         })
       } else {
+        // Utworzenie nowego wypożyczenia
         await loansApi.create(formData)
         toast({
           title: "Sukces",
@@ -117,7 +120,7 @@ export default function LoansPage() {
       setIsDialogOpen(false)
       resetForm()
       loadLoans()
-      loadBooks()
+      loadBooks() // Odśwież listę książek (dostępność)
     } catch (error: any) {
       toast({
         title: "Błąd",
@@ -206,100 +209,100 @@ export default function LoansPage() {
                   Nowe wypożyczenie
                 </Button>
               </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingLoan ? "Edytuj wypożyczenie" : "Utwórz nowe wypożyczenie"}
-                </DialogTitle>
-                <DialogDescription>
-                  {editingLoan
-                    ? "Zaktualizuj dane wypożyczenia"
-                    : "Wybierz książkę i użytkownika, aby utworzyć wypożyczenie"}
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit}>
-                <div className="grid gap-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="bookId">Książka *</Label>
-                    <Select
-                      value={formData.bookId.toString()}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, bookId: parseInt(value) })
-                      }
-                      disabled={!!editingLoan}
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingLoan ? "Edytuj wypożyczenie" : "Utwórz nowe wypożyczenie"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {editingLoan
+                      ? "Zaktualizuj dane wypożyczenia"
+                      : "Wybierz książkę i użytkownika, aby utworzyć wypożyczenie"}
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit}>
+                  <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bookId">Książka *</Label>
+                      <Select
+                        value={formData.bookId.toString()}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, bookId: parseInt(value) })
+                        }
+                        disabled={!!editingLoan}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Wybierz książkę" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {books.map((book) => (
+                            <SelectItem key={book.id} value={book.id.toString()}>
+                              {book.title} {book.authors?.length ? `- ${book.authors.map(a => a.fullName || `${a.firstName} ${a.lastName}`).join(", ")}` : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="employeeId">Pracownik *</Label>
+                      <Select
+                        value={formData.employeeId.toString()}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, employeeId: parseInt(value) })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Wybierz pracownika" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {employees.map((employee) => (
+                            <SelectItem key={employee.id} value={employee.id.toString()}>
+                              {employee.fullName || `${employee.firstName} ${employee.lastName}`} ({employee.email})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="dueDate">Termin zwrotu *</Label>
+                      <Input
+                        id="dueDate"
+                        type="date"
+                        value={formData.dueDate}
+                        onChange={(e) =>
+                          setFormData({ ...formData, dueDate: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">Notatki</Label>
+                      <Input
+                        id="notes"
+                        type="text"
+                        value={formData.notes || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, notes: e.target.value })
+                        }
+                        placeholder="Opcjonalne notatki"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Wybierz książkę" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {books.map((book) => (
-                          <SelectItem key={book.id} value={book.id.toString()}>
-                            {book.title} {book.authors?.length ? `- ${book.authors.map(a => a.fullName || `${a.firstName} ${a.lastName}`).join(", ")}` : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="employeeId">Pracownik *</Label>
-                    <Select
-                      value={formData.employeeId.toString()}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, employeeId: parseInt(value) })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Wybierz pracownika" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {employees.map((employee) => (
-                          <SelectItem key={employee.id} value={employee.id.toString()}>
-                            {employee.fullName || `${employee.firstName} ${employee.lastName}`} ({employee.email})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dueDate">Termin zwrotu *</Label>
-                    <Input
-                      id="dueDate"
-                      type="date"
-                      value={formData.dueDate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, dueDate: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Notatki</Label>
-                    <Input
-                      id="notes"
-                      type="text"
-                      value={formData.notes || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, notes: e.target.value })
-                      }
-                      placeholder="Opcjonalne notatki"
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    Anuluj
-                  </Button>
-                  <Button type="submit">
-                    {editingLoan ? "Zaktualizuj" : "Utwórz"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                      Anuluj
+                    </Button>
+                    <Button type="submit">
+                      {editingLoan ? "Zaktualizuj" : "Utwórz"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
 
@@ -356,25 +359,24 @@ export default function LoansPage() {
                     <TableCell>
                       {loan.returnDate
                         ? format(new Date(loan.returnDate), "dd MMM yyyy", {
-                            locale: pl,
-                          })
+                          locale: pl,
+                        })
                         : "-"}
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                          loan.isReturned
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${loan.isReturned
                             ? "bg-muted text-muted-foreground high-contrast:bg-transparent high-contrast:text-foreground"
                             : new Date(loan.dueDate) < new Date() && !loan.isReturned
-                            ? "bg-red-500/10 text-red-700 dark:text-red-400 high-contrast:bg-transparent high-contrast:text-foreground"
-                            : "bg-blue-500/10 text-blue-700 dark:text-blue-400 high-contrast:bg-transparent high-contrast:text-foreground"
-                        }`}
+                              ? "bg-red-500/10 text-red-700 dark:text-red-400 high-contrast:bg-transparent high-contrast:text-foreground"
+                              : "bg-blue-500/10 text-blue-700 dark:text-blue-400 high-contrast:bg-transparent high-contrast:text-foreground"
+                          }`}
                       >
                         {loan.isReturned
                           ? "Zwrócone"
                           : new Date(loan.dueDate) < new Date()
-                          ? "Przeterminowane"
-                          : "Aktywne"}
+                            ? "Przeterminowane"
+                            : "Aktywne"}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">

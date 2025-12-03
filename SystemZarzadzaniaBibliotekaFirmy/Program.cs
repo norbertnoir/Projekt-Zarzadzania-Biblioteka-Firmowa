@@ -8,7 +8,20 @@ using SystemZarzadzaniaBibliotekaFirmy.Middleware;
 using SystemZarzadzaniaBibliotekaFirmy.Models;
 using SystemZarzadzaniaBibliotekaFirmy.Services;
 
+using Serilog;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+using QuestPDF.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Konfiguracja licencji QuestPDF (wymagana dla wersji Community)
+QuestPDF.Settings.License = LicenseType.Community;
+
+// Konfiguracja Serilog - logowanie do konsoli i pliku z rotacją dzienną
+builder.Host.UseSerilog((context, configuration) => 
+    configuration.ReadFrom.Configuration(context.Configuration)
+        .WriteTo.Console()
+        .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day));
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -151,6 +164,9 @@ try
         logger.LogInformation("Tworzenie bazy danych...");
         context.Database.EnsureCreated();
         
+        logger.LogInformation("Inicjalizacja pracowników...");
+        await SeedEmployeesAsync(context, logger);
+
         logger.LogInformation("Inicjalizacja użytkowników...");
         await SeedUsersAsync(context, logger);
         
@@ -175,7 +191,39 @@ static async Task SeedUsersAsync(LibraryDbContext context, ILogger logger)
     {
         if (await context.Users.AnyAsync())
         {
-            logger.LogInformation("Użytkownicy już istnieją, pomijam seed data.");
+            logger.LogInformation("Użytkownicy już istnieją. Sprawdzanie brakujących powiązań z pracownikami...");
+            
+            var usersToUpdate = await context.Users.Where(u => u.EmployeeId == null).ToListAsync();
+            if (usersToUpdate.Any())
+            {
+                var existingEmployees = await context.Employees.ToListAsync();
+                bool changesMade = false;
+
+                foreach (var user in usersToUpdate)
+                {
+                    var employee = existingEmployees.FirstOrDefault(e => e.Email == user.Email);
+                    if (employee != null)
+                    {
+                        user.EmployeeId = employee.Id;
+                        logger.LogInformation("Naprawiono powiązanie dla użytkownika {Username} -> Pracownik ID {EmployeeId}", user.Username, employee.Id);
+                        changesMade = true;
+                    }
+                }
+
+                if (changesMade)
+                {
+                    await context.SaveChangesAsync();
+                    logger.LogInformation("Zapisano naprawione powiązania.");
+                }
+                else
+                {
+                    logger.LogInformation("Nie znaleziono pasujących pracowników dla użytkowników bez powiązań.");
+                }
+            }
+            else
+            {
+                logger.LogInformation("Wszyscy użytkownicy mają powiązania.");
+            }
             return;
         }
 
@@ -454,4 +502,67 @@ static async Task SeedBooksAsync(LibraryDbContext context, ILogger logger)
     }
 }
 
-app.Run();
+static async Task SeedEmployeesAsync(LibraryDbContext context, ILogger logger)
+{
+    try
+    {
+        var requiredEmployees = new List<Employee>
+        {
+            new Employee 
+            { 
+                FirstName = "Jan", 
+                LastName = "Kowalski", 
+                Email = "jan.kowalski@firma.pl",
+                Department = "IT",
+                Position = "Programista",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Employee 
+            { 
+                FirstName = "Anna", 
+                LastName = "Nowak", 
+                Email = "anna.nowak@firma.pl",
+                Department = "HR",
+                Position = "Specjalista HR",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Employee 
+            { 
+                FirstName = "Piotr", 
+                LastName = "Wiśniewski", 
+                Email = "piotr.wisniewski@firma.pl",
+                Department = "Biblioteka",
+                Position = "Bibliotekarz",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Employee 
+            { 
+                FirstName = "Maria", 
+                LastName = "Dąbrowska", 
+                Email = "maria.dabrowska@firma.pl",
+                Department = "Zarządzanie",
+                Position = "Dyrektor",
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        var existingEmails = await context.Employees.Select(e => e.Email).ToListAsync();
+        var employeesToAdd = requiredEmployees.Where(e => !existingEmails.Contains(e.Email)).ToList();
+
+        if (employeesToAdd.Any())
+        {
+            context.Employees.AddRange(employeesToAdd);
+            await context.SaveChangesAsync();
+            logger.LogInformation("Dodano {Count} brakujących pracowników.", employeesToAdd.Count);
+        }
+        else
+        {
+            logger.LogInformation("Wszyscy wymagani pracownicy już istnieją.");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Błąd podczas seedowania pracowników");
+        throw;
+    }
+}

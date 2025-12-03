@@ -9,12 +9,13 @@ const apiClient = axios.create({
   },
 })
 
-// Request interceptor for adding auth tokens if needed
+// Interceptor żądań - dodaje token autoryzacyjny do każdego zapytania
 apiClient.interceptors.request.use(
   (config) => {
-    // Add auth token if available
+    // Pobierz token z localStorage, jeśli istnieje
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     if (token) {
+      // Dodaj nagłówek Authorization: Bearer <token>
       config.headers.Authorization = `Bearer ${token}`
     }
     return config
@@ -24,15 +25,15 @@ apiClient.interceptors.request.use(
   }
 )
 
-// Response interceptor for error handling
+// Interceptor odpowiedzi - obsługuje globalne błędy (np. wygaśnięcie sesji)
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized - clear token and redirect to login
+      // Obsługa błędu 401 Unauthorized - wyczyść token i przekieruj do logowania
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token')
-        // Only redirect if not already on login page
+        // Przekieruj tylko jeśli użytkownik nie jest już na stronie logowania
         if (window.location.pathname !== '/login') {
           window.location.href = '/login'
         }

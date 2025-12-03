@@ -39,34 +39,6 @@ export default function UsersPage() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
   const { toast } = useToast()
 
-  // Przekieruj użytkowników bez uprawnień admina
-  useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      router.push('/')
-      toast({
-        title: "Brak dostępu",
-        description: "Nie masz uprawnień do przeglądania tej strony",
-        variant: "destructive",
-      })
-    }
-  }, [isAdmin, authLoading, router, toast])
-
-  // Nie renderuj strony jeśli użytkownik nie jest adminem
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="text-center">Ładowanie...</div>
-        </main>
-      </div>
-    )
-  }
-
-  if (!isAdmin) {
-    return null
-  }
-
   const [formData, setFormData] = useState<CreateEmployeeDto>({
     firstName: "",
     lastName: "",
@@ -74,25 +46,6 @@ export default function UsersPage() {
     department: "",
     position: "",
   })
-
-  useEffect(() => {
-    loadEmployees()
-  }, [])
-
-  useEffect(() => {
-    if (searchTerm) {
-      const filtered = employees.filter(
-        (emp) =>
-          emp.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          emp.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          emp.department?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      setEmployees(filtered)
-    } else {
-      loadEmployees()
-    }
-  }, [searchTerm])
 
   const loadEmployees = async () => {
     try {
@@ -108,6 +61,57 @@ export default function UsersPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Przekieruj użytkowników bez uprawnień admina
+  useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.push('/')
+      toast({
+        title: "Brak dostępu",
+        description: "Nie masz uprawnień do przeglądania tej strony",
+        variant: "destructive",
+      })
+    }
+  }, [isAdmin, authLoading, router, toast])
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadEmployees()
+    }
+  }, [isAdmin])
+
+  useEffect(() => {
+    if (searchTerm) {
+      const filtered = employees.filter(
+        (emp) =>
+          emp.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          emp.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          emp.department?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      setEmployees(filtered)
+    } else {
+      if (isAdmin) {
+        loadEmployees()
+      }
+    }
+  }, [searchTerm, isAdmin])
+
+  // Nie renderuj strony jeśli użytkownik nie jest adminem
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="text-center">Ładowanie...</div>
+        </main>
+      </div>
+    )
+  }
+
+  if (!isAdmin) {
+    return null
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -182,12 +186,12 @@ export default function UsersPage() {
 
   const displayedEmployees = searchTerm
     ? employees.filter(
-        (emp) =>
-          emp.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          emp.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          emp.department?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      (emp) =>
+        emp.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.department?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     : employees
 
   return (
@@ -207,96 +211,96 @@ export default function UsersPage() {
                   Dodaj pracownika
                 </Button>
               </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingEmployee ? "Edytuj pracownika" : "Dodaj nowego pracownika"}
-                </DialogTitle>
-                <DialogDescription>
-                  {editingEmployee
-                    ? "Zaktualizuj informacje o pracowniku"
-                    : "Wypełnij formularz, aby dodać nowego pracownika"}
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingEmployee ? "Edytuj pracownika" : "Dodaj nowego pracownika"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {editingEmployee
+                      ? "Zaktualizuj informacje o pracowniku"
+                      : "Wypełnij formularz, aby dodać nowego pracownika"}
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit}>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">Imię *</Label>
+                        <Input
+                          id="firstName"
+                          value={formData.firstName}
+                          onChange={(e) =>
+                            setFormData({ ...formData, firstName: e.target.value })
+                          }
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Nazwisko *</Label>
+                        <Input
+                          id="lastName"
+                          value={formData.lastName}
+                          onChange={(e) =>
+                            setFormData({ ...formData, lastName: e.target.value })
+                          }
+                          required
+                        />
+                      </div>
+                    </div>
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">Imię *</Label>
+                      <Label htmlFor="email">Email *</Label>
                       <Input
-                        id="firstName"
-                        value={formData.firstName}
+                        id="email"
+                        type="email"
+                        value={formData.email}
                         onChange={(e) =>
-                          setFormData({ ...formData, firstName: e.target.value })
+                          setFormData({ ...formData, email: e.target.value })
                         }
                         required
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Nazwisko *</Label>
-                      <Input
-                        id="lastName"
-                        value={formData.lastName}
-                        onChange={(e) =>
-                          setFormData({ ...formData, lastName: e.target.value })
-                        }
-                        required
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="department">Dział</Label>
+                        <Input
+                          id="department"
+                          value={formData.department}
+                          onChange={(e) =>
+                            setFormData({ ...formData, department: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="position">Stanowisko</Label>
+                        <Input
+                          id="position"
+                          value={formData.position}
+                          onChange={(e) =>
+                            setFormData({ ...formData, position: e.target.value })
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="department">Dział</Label>
-                      <Input
-                        id="department"
-                        value={formData.department}
-                        onChange={(e) =>
-                          setFormData({ ...formData, department: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="position">Stanowisko</Label>
-                      <Input
-                        id="position"
-                        value={formData.position}
-                        onChange={(e) =>
-                          setFormData({ ...formData, position: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsDialogOpen(false)
-                      resetForm()
-                    }}
-                  >
-                    Anuluj
-                  </Button>
-                  <Button type="submit">
-                    {editingEmployee ? "Zaktualizuj" : "Dodaj"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setIsDialogOpen(false)
+                        resetForm()
+                      }}
+                    >
+                      Anuluj
+                    </Button>
+                    <Button type="submit">
+                      {editingEmployee ? "Zaktualizuj" : "Dodaj"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
 

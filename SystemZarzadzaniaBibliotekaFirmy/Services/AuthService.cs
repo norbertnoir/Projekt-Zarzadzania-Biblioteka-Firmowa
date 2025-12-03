@@ -32,6 +32,7 @@ public class AuthService : IAuthService
         var allUsers = await _context.Users.Select(u => u.Username).ToListAsync();
         _logger.LogInformation("Użytkownicy w bazie: {Users}", string.Join(", ", allUsers));
         
+        // Pobierz użytkownika z bazy danych wraz z powiązanym pracownikiem
         var user = await _context.Users
             .Include(u => u.Employee)
             .FirstOrDefaultAsync(u => u.Username.ToLower() == loginDto.Username.ToLower() && u.IsActive);
@@ -45,6 +46,7 @@ public class AuthService : IAuthService
         _logger.LogInformation("Znaleziono użytkownika: {Username}, ID: {UserId}, IsActive: {IsActive}", 
             user.Username, user.Id, user.IsActive);
 
+        // Weryfikacja hasła (porównanie hasha)
         var passwordValid = VerifyPassword(loginDto.Password, user.PasswordHash);
         _logger.LogInformation("Weryfikacja hasła dla użytkownika {Username}: {IsValid}", 
             user.Username, passwordValid);
@@ -59,9 +61,11 @@ public class AuthService : IAuthService
         user.LastLoginAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
+        // Generowanie tokenu JWT
         var token = GenerateJwtToken(user);
         var expiresAt = DateTime.UtcNow.AddHours(24); // Token ważny 24 godziny
 
+        // Zwrócenie odpowiedzi z tokenem
         return new AuthResponseDto
         {
             Token = token,
@@ -183,6 +187,7 @@ public class AuthService : IAuthService
 
     private string GenerateJwtToken(User user)
     {
+        // Pobranie konfiguracji JWT z appsettings.json
         var jwtSettings = _configuration.GetSection("JwtSettings");
         var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey nie jest skonfigurowany");
         var issuer = jwtSettings["Issuer"] ?? "LibraryManagement";
@@ -192,15 +197,18 @@ public class AuthService : IAuthService
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
+        // Definicja "roszczeń" (claims) - danych zaszyfrowanych w tokenie
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.Username),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Role, user.Role),
+            new Claim("EmployeeId", user.EmployeeId?.ToString() ?? ""),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
+        // Utworzenie tokenu
         var token = new JwtSecurityToken(
             issuer: issuer,
             audience: audience,

@@ -19,10 +19,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserDto | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Funkcja ładująca dane użytkownika na podstawie tokenu JWT
   const loadUser = async () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
       if (token) {
+        // Pobranie danych użytkownika z API
         const userData = await authApi.me()
         setUser(userData)
       } else {

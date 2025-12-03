@@ -45,6 +45,24 @@ public class LoansController : ControllerBase
     {
         var username = GetCurrentUsername();
         var userId = GetCurrentUserId();
+        
+        // Logika zabezpieczająca przed wypożyczaniem dla innych osób (chyba że jest się adminem)
+        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+        var isAdmin = userRole == "Admin" || userRole == "Administrator" || userRole == "Librarian";
+
+        if (!isAdmin)
+        {
+            var employeeIdClaim = User.FindFirst("EmployeeId")?.Value;
+            if (string.IsNullOrEmpty(employeeIdClaim) || !int.TryParse(employeeIdClaim, out int employeeId))
+            {
+                _logger.LogWarning("Użytkownik {Username} (ID: {UserId}) próbował wypożyczyć książkę, ale nie ma powiązanego pracownika.", username, userId);
+                return BadRequest("Twój użytkownik nie jest powiązany z żadnym pracownikiem. Skontaktuj się z administratorem.");
+            }
+
+            // Wymuś użycie ID pracownika powiązanego z zalogowanym użytkownikiem
+            createLoanDto.EmployeeId = employeeId;
+        }
+
         _logger.LogInformation("Użytkownik {Username} (ID: {UserId}) inicjuje wypożyczenie - Książka ID: {BookId}, Pracownik ID: {EmployeeId}", 
             username, userId, createLoanDto.BookId, createLoanDto.EmployeeId);
         

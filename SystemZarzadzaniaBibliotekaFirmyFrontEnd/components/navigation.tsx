@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Book, Users, FileText, Home, LogOut } from "lucide-react"
+import { Book, Users, FileText, Home, LogOut, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/contexts/AuthContext"
@@ -18,9 +18,11 @@ import {
 
 const navigation = [
   { name: "Strona główna", href: "/", icon: Home, adminOnly: false },
+  { name: "Dashboard", href: "/dashboard", icon: FileText, adminOnly: false },
   { name: "Książki", href: "/books", icon: Book, adminOnly: false },
-  { name: "Wypożyczenia", href: "/loans", icon: FileText, adminOnly: false },
+  { name: "Wypożyczenia", href: "/loans", icon: FileText, adminOnly: true },
   { name: "Pracownicy", href: "/users", icon: Users, adminOnly: true },
+  { name: "Raporty i Logi", href: "/admin/reports", icon: Activity, adminOnly: true },
 ]
 
 export function Navigation() {
