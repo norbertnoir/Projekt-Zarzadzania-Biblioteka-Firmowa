@@ -37,6 +37,8 @@ services:
     build:
       context: ./SystemZarzadzaniaBibliotekaFirmyFrontEnd
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080
     container_name: library-frontend
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8080

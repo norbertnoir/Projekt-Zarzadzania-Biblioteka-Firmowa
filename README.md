@@ -174,6 +174,16 @@ Aby uruchomić cały system (Baza + Backend + Frontend) jedną komendą:
 4.  Aplikacja będzie dostępna pod adresem: **[http://localhost:3001](http://localhost:3001)**
     *(Backend API: http://localhost:8080, Baza danych: localhost, port 1434)*
 
+### Rozwiązywanie problemów
+Jeśli napotkasz błąd:
+`no configuration file provided: not found`
+Oznacza to, że próbujesz uruchomić komendę ze złego katalogu (np. z katalogu użytkownika).
+**Rozwiązanie:** Upewnij się, że jesteś w katalogu projektu, gdzie znajduje się plik `docker-compose.yml`:
+```powershell
+cd source\repos\SystemZarzadzaniaBibliotekaFirmy\Projekt-Zarzadzania-Biblioteka-Firmowa
+docker-compose up --build
+```
+
 ---
 
 ## 6. Zrzuty Ekranu
