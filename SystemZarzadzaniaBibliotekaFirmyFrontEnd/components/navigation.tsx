@@ -18,7 +18,6 @@ import {
 
 const navigation = [
   { name: "Strona główna", href: "/", icon: Home, adminOnly: false },
-  { name: "Dashboard", href: "/dashboard", icon: FileText, adminOnly: false },
   { name: "Książki", href: "/books", icon: Book, adminOnly: false },
   { name: "Wypożyczenia", href: "/loans", icon: FileText, adminOnly: true },
   { name: "Pracownicy", href: "/users", icon: Users, adminOnly: true },
