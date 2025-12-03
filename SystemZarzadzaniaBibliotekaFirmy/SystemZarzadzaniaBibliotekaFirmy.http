@@ -1,0 +1,48 @@
+@SystemZarzadzaniaBibliotekaFirmy_HostAddress = http://localhost:5205
+@Token = 
+
+### Logowanie - Admin
+POST {{SystemZarzadzaniaBibliotekaFirmy_HostAddress}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Admin123!"
+}
+
+### Logowanie - Bibliotekarz
+POST {{SystemZarzadzaniaBibliotekaFirmy_HostAddress}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "username": "bibliotekarz",
+  "password": "Librarian123!"
+}
+
+### Logowanie - Pracownik (Jan Kowalski)
+POST {{SystemZarzadzaniaBibliotekaFirmy_HostAddress}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "username": "jan.kowalski",
+  "password": "Employee123!"
+}
+
+### Logowanie - Pracownik (Anna Nowak)
+POST {{SystemZarzadzaniaBibliotekaFirmy_HostAddress}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "username": "anna.nowak",
+  "password": "Employee123!"
+}
+
+### Pobierz informacje o zalogowanym użytkowniku
+GET {{SystemZarzadzaniaBibliotekaFirmy_HostAddress}}/api/Auth/me
+Authorization: Bearer {{Token}}
+
+### Pobierz wszystkie książki (wymaga autoryzacji)
+GET {{SystemZarzadzaniaBibliotekaFirmy_HostAddress}}/api/Books
+Authorization: Bearer {{Token}}
+
+###

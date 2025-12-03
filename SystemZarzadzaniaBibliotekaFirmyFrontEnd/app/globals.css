@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Kremowy biały motyw - przyjazny dla oczu */
+    --background: 40 20% 98%;
+    --foreground: 30 10% 15%;
+    --card: 40 15% 99%;
+    --card-foreground: 30 10% 15%;
+    --popover: 40 15% 99%;
+    --popover-foreground: 30 10% 15%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 40 10% 94%;
+    --secondary-foreground: 30 10% 20%;
+    --muted: 40 10% 94%;
+    --muted-foreground: 30 8% 45%;
+    --accent: 40 10% 94%;
+    --accent-foreground: 30 10% 20%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 40 8% 88%;
+    --input: 40 8% 88%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Ciemny motyw - przyjazny dla oczu, nieco lżejszy niż czarny */
+    --background: 220 15% 18%;
+    --foreground: 40 20% 95%;
+    --card: 220 15% 20%;
+    --card-foreground: 40 20% 95%;
+    --popover: 220 15% 20%;
+    --popover-foreground: 40 20% 95%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 220 15% 18%;
+    --secondary: 220 12% 25%;
+    --secondary-foreground: 40 20% 95%;
+    --muted: 220 12% 25%;
+    --muted-foreground: 40 10% 70%;
+    --accent: 220 12% 25%;
+    --accent-foreground: 40 20% 95%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 40 20% 95%;
+    --border: 220 10% 30%;
+    --input: 220 10% 30%;
+    --ring: 217.2 91.2% 59.8%;
+  }
+
+  .high-contrast {
+    /* Motyw wysokiego kontrastu - czarne tło, żółty tekst */
+    --background: 0 0% 0%;
+    --foreground: 50 100% 50%;
+    --card: 0 0% 0%;
+    --card-foreground: 50 100% 50%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 50 100% 50%;
+    --primary: 50 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 50 100% 50%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 50 100% 60%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 50 100% 50%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 0%;
+    --border: 50 100% 50%;
+    --input: 50 100% 50%;
+    --ring: 50 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
