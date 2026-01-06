@@ -43,6 +43,7 @@ export default function BooksPage() {
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false)
   const [editingBook, setEditingBook] = useState<Book | null>(null)
   const [selectedBooks, setSelectedBooks] = useState<number[]>([])
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const { toast } = useToast()
 
   const [formData, setFormData] = useState<CreateBookDto>({
@@ -108,9 +109,34 @@ export default function BooksPage() {
     }
   }, [searchTerm, handleSearch, loadBooks])
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.title.trim()) newErrors.title = "Tytuł jest wymagany"
+    if (!formData.isbn.trim()) newErrors.isbn = "ISBN jest wymagany"
+    if (formData.year < 1000 || formData.year > 2100) newErrors.year = "Rok musi być między 1000 a 2100"
+    if (formData.pages < 1 || formData.pages > 10000) newErrors.pages = "Liczba stron musi być między 1 a 10000"
+    if (formData.categoryId < 1) newErrors.categoryId = "Kategoria jest wymagana"
+    if (!formData.publisher.trim()) newErrors.publisher = "Wydawca jest wymagany"
+    if (!formData.authorIds || formData.authorIds.length === 0) newErrors.authorIds = "Przynajmniej jeden autor jest wymagany"
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   // Funkcja obsługująca wysyłanie formularza (dodawanie/edycja)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!validateForm()) {
+      toast({
+        title: "Błąd walidacji",
+        description: "Proszę poprawić błędy w formularzu",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
       if (editingBook) {
         // Aktualizacja istniejącej książki
@@ -220,6 +246,7 @@ export default function BooksPage() {
       categoryId: 0,
       authorIds: [],
     })
+    setErrors({})
     setEditingBook(null)
   }
 
@@ -345,7 +372,10 @@ export default function BooksPage() {
                 if (!open) resetForm()
               }}>
                 <DialogTrigger asChild>
-                  <Button onClick={() => resetForm()}>
+                  <Button onClick={() => {
+                    resetForm()
+                    setErrors({})
+                  }}>
                     <Plus className="mr-2 h-4 w-4" />
                     Dodaj książkę
                   </Button>
@@ -371,6 +401,7 @@ export default function BooksPage() {
                           onChange={(e) =>
                             setFormData({ ...formData, title: e.target.value })
                           }
+                          className={errors.title ? "border-red-500" : ""}
                           required
                         />
                       </div>
@@ -381,7 +412,7 @@ export default function BooksPage() {
                             authorsApi.getAll().then(setAuthors)
                           }} />
                         </div>
-                        <div className="border rounded-md p-2 h-40 overflow-y-auto space-y-2">
+                        <div className={`border rounded-md p-2 h-40 overflow-y-auto space-y-2 ${errors.authorIds ? "border-red-500" : ""}`}>
                           {authors.map((author) => (
                             <div key={author.id} className="flex items-center space-x-2">
                               <Checkbox
@@ -418,13 +449,14 @@ export default function BooksPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="isbn">ISBN</Label>
+                          <Label htmlFor="isbn">ISBN *</Label>
                           <Input
                             id="isbn"
                             value={formData.isbn}
                             onChange={(e) =>
                               setFormData({ ...formData, isbn: e.target.value })
                             }
+                            className={errors.isbn ? "border-red-500" : ""}
                           />
                         </div>
                         <div className="space-y-2">
@@ -432,6 +464,8 @@ export default function BooksPage() {
                           <Input
                             id="year"
                             type="number"
+                            min="1000"
+                            max="2100"
                             value={formData.year}
                             onChange={(e) =>
                               setFormData({
@@ -439,6 +473,7 @@ export default function BooksPage() {
                                 year: parseInt(e.target.value) || new Date().getFullYear(),
                               })
                             }
+                            className={errors.year ? "border-red-500" : ""}
                             required
                           />
                         </div>
@@ -449,6 +484,7 @@ export default function BooksPage() {
                           <Input
                             id="pages"
                             type="number"
+                            min="1"
                             value={formData.pages}
                             onChange={(e) =>
                               setFormData({
@@ -456,6 +492,7 @@ export default function BooksPage() {
                                 pages: parseInt(e.target.value) || 0,
                               })
                             }
+                            className={errors.pages ? "border-red-500" : ""}
                             required
                           />
                         </div>
@@ -464,6 +501,7 @@ export default function BooksPage() {
                           <Input
                             id="categoryId"
                             type="number"
+                            min="1"
                             value={formData.categoryId}
                             onChange={(e) =>
                               setFormData({
@@ -471,18 +509,20 @@ export default function BooksPage() {
                                 categoryId: parseInt(e.target.value) || 0,
                               })
                             }
+                            className={errors.categoryId ? "border-red-500" : ""}
                             required
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="publisher">Wydawca</Label>
+                        <Label htmlFor="publisher">Wydawca *</Label>
                         <Input
                           id="publisher"
                           value={formData.publisher}
                           onChange={(e) =>
                             setFormData({ ...formData, publisher: e.target.value })
                           }
+                          className={errors.publisher ? "border-red-500" : ""}
                         />
                       </div>
                       <div className="space-y-2">
