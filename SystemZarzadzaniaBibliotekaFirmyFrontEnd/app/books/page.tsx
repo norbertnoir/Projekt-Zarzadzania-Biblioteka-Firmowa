@@ -112,26 +112,31 @@ export default function BooksPage() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.title.trim()) newErrors.title = "Tytuł jest wymagany"
-    if (!formData.isbn.trim()) newErrors.isbn = "ISBN jest wymagany"
+    if (!formData.title?.trim()) newErrors.title = "Tytuł jest wymagany"
+    if (!formData.isbn?.trim()) {
+      newErrors.isbn = "ISBN jest wymagany"
+    } else if (!/^(?:\d{10}|\d{13})$/.test(formData.isbn.trim())) {
+      newErrors.isbn = "ISBN musi mieć 10 lub 13 cyfr"
+    }
     if (formData.year < 1000 || formData.year > 2100) newErrors.year = "Rok musi być między 1000 a 2100"
     if (formData.pages < 1 || formData.pages > 10000) newErrors.pages = "Liczba stron musi być między 1 a 10000"
     if (formData.categoryId < 1) newErrors.categoryId = "Kategoria jest wymagana"
-    if (!formData.publisher.trim()) newErrors.publisher = "Wydawca jest wymagany"
+    if (!formData.publisher?.trim()) newErrors.publisher = "Wydawca jest wymagany"
     if (!formData.authorIds || formData.authorIds.length === 0) newErrors.authorIds = "Przynajmniej jeden autor jest wymagany"
 
     setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    return newErrors
   }
 
   // Funkcja obsługująca wysyłanie formularza (dodawanie/edycja)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) {
+    const validationErrors = validateForm()
+    if (Object.keys(validationErrors).length > 0) {
       toast({
         title: "Błąd walidacji",
-        description: "Proszę poprawić błędy w formularzu",
+        description: Object.values(validationErrors).join("\n"),
         variant: "destructive",
       })
       return
@@ -157,9 +162,17 @@ export default function BooksPage() {
       resetForm()
       loadBooks()
     } catch (error: any) {
+      const responseData = error.response?.data
+      let errorMessage = responseData?.message || "Wystąpił błąd"
+
+      // Obsługa tablicy błędów z backendu
+      if (responseData?.errors && Array.isArray(responseData.errors)) {
+        errorMessage = responseData.errors.join("\n")
+      }
+
       toast({
         title: "Błąd",
-        description: error.response?.data?.message || "Wystąpił błąd",
+        description: errorMessage,
         variant: "destructive",
       })
     }
