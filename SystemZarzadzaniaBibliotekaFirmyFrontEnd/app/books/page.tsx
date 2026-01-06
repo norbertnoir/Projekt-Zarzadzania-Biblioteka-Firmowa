@@ -25,15 +25,18 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { booksApi } from "@/lib/api/books"
 import { loansApi } from "@/lib/api/loans"
-import { Book, CreateBookDto, CreateLoanDto } from "@/types"
+import { Book, CreateBookDto, CreateLoanDto, Author } from "@/types"
 import { Plus, Search, Edit, Trash2, Eye, BookOpen } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
+import { authorsApi } from "@/lib/api/authors"
+import { AddAuthorDialog } from "@/components/add-author-dialog"
 import Link from "next/link"
 
 export default function BooksPage() {
   const { isAdmin, user, loading: authLoading } = useAuth()
   const [books, setBooks] = useState<Book[]>([])
+  const [authors, setAuthors] = useState<Author[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -56,12 +59,16 @@ export default function BooksPage() {
   const loadBooks = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await booksApi.getAll()
-      setBooks(data)
+      const [booksData, authorsData] = await Promise.all([
+        booksApi.getAll(),
+        authorsApi.getAll()
+      ])
+      setBooks(booksData)
+      setAuthors(authorsData)
     } catch (error) {
       toast({
         title: "Błąd",
-        description: "Nie udało się załadować książek",
+        description: "Nie udało się załadować danych",
         variant: "destructive",
       })
     } finally {
@@ -366,6 +373,48 @@ export default function BooksPage() {
                           }
                           required
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label>Autorzy *</Label>
+                          <AddAuthorDialog onAuthorCreated={() => {
+                            authorsApi.getAll().then(setAuthors)
+                          }} />
+                        </div>
+                        <div className="border rounded-md p-2 h-40 overflow-y-auto space-y-2">
+                          {authors.map((author) => (
+                            <div key={author.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`author-${author.id}`}
+                                checked={formData.authorIds?.includes(author.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setFormData({
+                                      ...formData,
+                                      authorIds: [...(formData.authorIds || []), author.id],
+                                    })
+                                  } else {
+                                    setFormData({
+                                      ...formData,
+                                      authorIds: formData.authorIds?.filter((id) => id !== author.id),
+                                    })
+                                  }
+                                }}
+                              />
+                              <Label
+                                htmlFor={`author-${author.id}`}
+                                className="text-sm font-normal cursor-pointer"
+                              >
+                                {author.fullName || `${author.firstName} ${author.lastName}`}
+                              </Label>
+                            </div>
+                          ))}
+                          {authors.length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              Brak autorów. Dodaj nowego autora.
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">

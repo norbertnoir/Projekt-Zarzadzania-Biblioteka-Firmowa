@@ -7,6 +7,12 @@ export interface Author {
   biography?: string
 }
 
+export interface CreateAuthorDto {
+  firstName: string
+  lastName: string
+  biography?: string
+}
+
 // Category types
 export interface Category {
   id: number
@@ -40,7 +46,7 @@ export interface CreateBookDto {
   authorIds?: number[]
 }
 
-export interface UpdateBookDto extends Partial<CreateBookDto> {}
+export interface UpdateBookDto extends Partial<CreateBookDto> { }
 
 // Loan types
 export interface Loan {
@@ -95,7 +101,7 @@ export interface CreateEmployeeDto {
   position?: string
 }
 
-export interface UpdateEmployeeDto extends Partial<CreateEmployeeDto> {}
+export interface UpdateEmployeeDto extends Partial<CreateEmployeeDto> { }
 
 // User types (dla autoryzacji - z /api/Auth/users)
 export interface User {
